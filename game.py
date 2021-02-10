@@ -21,6 +21,7 @@ class Game:
         #ask for the players input
         #prompt raise amount 
         #subtract that amount, add to pot
+        pass
 
 class TexasHoldEm(Game):
     def __init__(self, players, dealer, pot, community_cards):
@@ -30,6 +31,7 @@ class TexasHoldEm(Game):
 
     def turn(self):
         #promt player for input
+        pass
     
     def fold(self):
         pass

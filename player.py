@@ -28,14 +28,10 @@ class Player:
     def balance(self):
         return self.money
 
-    
-
-
-
 class Dealer(Player):
     def __init__(self,starting_hand = None,betting=START_AMOUNT, rigged=False):
         Player.__init__(self,starting_hand = None,betting=START_AMOUNT)
-        self.cheating = rigged
+        self.rigged = rigged
 
     
 

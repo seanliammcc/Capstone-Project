@@ -6,12 +6,14 @@ class Card:
         self.suit = suits
         self.rank = ranks
 
-    def assign_suit(self, card_image):
+    def assign_suit(self, suit):
         #assign suit to card
-        pass
+        self.suit = suit
 
-    def assign_rank(self, card_image):
+    def assign_rank(self, rank):
         #assign rank to card
-        pass
+        self.rank = rank
 
+    def identify_card(self):
+        return self.suit, self.rank
     

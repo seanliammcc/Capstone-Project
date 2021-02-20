@@ -6,8 +6,8 @@ from player import Player, Dealer
 
 def create_players(no_players):
     players = []
-    for _ in range(0,no_players):
-        player_1 = Player()
+    for i in range(0,no_players):
+        player_1 = Player(i+1)
         players.append(player_1)
     return players
 

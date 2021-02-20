@@ -2,18 +2,18 @@ import Card
 from Camera import Image
 import numpy
 
-START_AMOUNT = 5
+START_AMOUNT = 5.00
 
 class Player:
-    def __init__(self,starting_hand = None,betting=START_AMOUNT):
+    def __init__(self,number,starting_hand = None,betting=START_AMOUNT):
         if starting_hand == None:
             self.hand = []
         self.money = betting
+        self.number = number
     
     def add_card(self, Card):
         #add the card to the hand
         self.hand.append(Card)
-        pass
 
     def bet(self, amt): #returns true if successful, false if not
         if self.money - amt > 0:
@@ -28,12 +28,16 @@ class Player:
     def balance(self):
         return self.money
 
-class Dealer(Player):
-    def __init__(self,starting_hand = None,betting=START_AMOUNT, rigged=False):
-        Player.__init__(self,starting_hand = None,betting=START_AMOUNT)
-        self.rigged = rigged
+    def player_number(self):
+        return self.number
 
-    
+    def player_cards(self):
+        return self.hand
+
+class Dealer(Player):
+    def __init__(self,rigged=False, number=0,starting_hand = None,betting=START_AMOUNT):
+        Player.__init__(self,number,starting_hand = None,betting=START_AMOUNT)
+        self.rigged = rigged
 
 
 

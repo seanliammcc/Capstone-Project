@@ -46,6 +46,7 @@ class Game:
         self.pot = pot
         self.rounds = rounds
         self.deck = deck
+        self.previous_bet = 0
         #shuffle
         self.deck.shuffle()
         #does not deal cards, doesn't know how many
@@ -71,68 +72,102 @@ class TexasHoldEm(Game):
         if community_cards == None:
             self.community_cards = [] #cards in middle of table
         #deal cards
-        for player in players:
-            cards = deck.deal_cards(2)
+        for player in self.players:
+            cards = self.deck.deal_cards(2)
             for card in cards:
                 player.add_card(card)
-        self.community_cards = deck.deal_cards(3)
+        self.community_cards = self.deck.deal_cards(3)
     
     def play(self):
         #play the game
         for i in range(0,self.rounds):
-            print("Round " + str(i))
+            print("Round " + str(i+1))
             self.small_blind()
+            self.big_blind()
+            if len(self.players) > 2:
+                self.under_the_gun()
             self.round()
-    
-    def small_blind(self):
-        for player in self.players:
-            self.bet(player)
 
+    #todo - set SB amount
+    def small_blind(self):
+        player = self.players[0] #Player to left of dealer
+        print("This is the Small Blind.")
+        print("Player " + str(player.player_number()) + ", please input your bet.")
+        self.bet(player)
+    
+    #todo - set BB amount
+    def big_blind(self):
+        player = self.players[1] #Player to left of SB
+        print("This is the Big Blind.")
+        print("Player " + str(player.player_number()) + ", please input your bet.")
+        self.bet(player)
+
+    def under_the_gun(self):
+        round_players = self.players
+        for i in range(2,len(round_players())): #Only players that were'nt SB and BB
+            self.turn(round_players[i],True)
+        self.call(self.dealer()) #Dealer just calls for now - no AI
+        self.previous_bet = 0 #Make it so that Player 1 can check for 1st round
+
+    #Todo - set restrictions on how to end round
     def round(self):
         #play a round until a player has won
         round_players = self.players
-        print("The community cards are: ")
-        for card in self.community_cards:
-            suit, rank = card.identify_card()
-            print(suit + rank)
-        while len(round_players) > 1:
+        while len(round_players) > 1: #not true condition, must be improved
+            print("The community cards are: ")
+            for card in self.community_cards:
+                suit, rank = card.identify_card()
+                print(suit + rank)
             for player in round_players:
-                self.turn(player)
+                self.turn(round_players,player,False)
                 #take a turn
                 #check if a player has won
                 #end if won, continue if not
-                pass
+            self.call(self.dealer)
+            card = self.deck.deal_cards(1)
+            self.community_cards.append(card)
 
-    def turn(self, player):
+    def turn(self, round_players, player, UTG):
         #prompt player for input
         #augment player and pot based off of response
-        print("Please type the number for your choice.")
-        choice = input("Would you like to:\n1 - Bet\n2 - Fold\n3 - Call")
+        print("Player " + str(player.player_number()) + ", please type the number for your choice.")
+        if not(UTG):
+            print("Your cards are:")
+            cards = player.player_cards()
+            for card in cards:
+                suit, rank = card.identify_card()
+                print(suit+rank)
+        choice = input("Would you like to:\n1 - Bet\n2 - Fold\n3 - Call\n")
         if choice == "1":
             self.bet(player)
         elif choice == "2":
-            self.fold(player)
+            self.fold(player, round_players)
         elif choice == "3":
             self.call(player)
 
     
-    def fold(self, player):
-        #remove player from round
-        pass
+    def fold(self, player, round_players):
+        round_players.remove(player)
+        
 
-    def call(self, player):
-        pass
+    def call(self, player: Player):
+        if player.balance() - self.previous_bet < 0:
+            print("You do not have enough money to call, so you go all in.")
+            player.bet(player.balance())
+        else:
+            player.bet(self.previous_bet)
 
     #add money to the pot, remove from player
     def bet(self, player: Player):
         print("You have " + str(player.balance()))
-        amt = int(input("Input how much would you like to bet: "))
-        if player.bet(amt):
-            self.pot = self.pot + amt
-        else:
-            print("Invalid amount. Next player.")
+        amt = float(input("Input how much would you like to bet: "))
+        while not(player.bet(amt)) and amt < self.previous_bet:
+            print("Invalid amount.")
+            amt = float(input("Input how much would you like to bet: "))
+        print("You have " + str(player.balance()))
+        self.previous_bet = amt
 
-    def check(self, player):
     #I dont know what this does yet
+    def check(self, player):
         pass
 

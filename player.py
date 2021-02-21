@@ -2,10 +2,9 @@ import Card
 from Camera import Image
 import numpy
 
-START_AMOUNT = 5.00
 
 class Player:
-    def __init__(self,number,starting_hand = None,betting=START_AMOUNT):
+    def __init__(self,number,betting=5, starting_hand = None):
         """
         Create player with an empty hand, an initial amount of money, and a number
         """
@@ -13,6 +12,7 @@ class Player:
             self.hand = []
         self.money = betting
         self.number = number
+        self.previous_action = "1"
     
     def add_card(self, Card):
         """
@@ -45,10 +45,22 @@ class Player:
     def player_cards(self):
         return self.hand
 
+    def return_prev_action(self):
+        return self.previous_action
+
+    def assign_recent_action(self, action):
+        self.previous_action = action
+
 class Dealer(Player):
-    def __init__(self,rigged=False, number=0,starting_hand = None,betting=START_AMOUNT):
-        Player.__init__(self,number,starting_hand = None,betting=START_AMOUNT)
+    def __init__(self,rigged=False, number=0,betting=5,starting_hand = None):
+        Player.__init__(self,number,betting=5,starting_hand = None)
         self.rigged = rigged
 
+    def bet(self, amt):
+        """
+        Perform call, and then output to screen
+        """
+        Player.bet(self, amt)
+        print("The dealer has called")
 
 

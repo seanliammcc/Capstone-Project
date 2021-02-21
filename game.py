@@ -7,10 +7,10 @@ ALLSUITS = ['D', 'H', 'S', 'C']
 
 class Deck:
     def __init__(self):
-    """
-    Creates a deck of cards in order, stored into cards
-    Cards that have been delt are moved from cards to delt_cards
-    """
+        """
+        Creates a deck of cards in order, stored into cards
+        Cards that have been delt are moved from cards to delt_cards
+        """
         self.cards = []
         self.delt_cards = []
         for suit in ALLSUITS:
@@ -21,21 +21,19 @@ class Deck:
                 self.cards.append(card)
 
     def shuffle(self): 
-    """
-    Currently randomizes the cards that are in the deck.
-    TODO - make shuffling physical with dealer
-    """
+        """
+        Currently randomizes the cards that are in the deck.
+        TODO - make shuffling physical with dealer
+        """
         random.shuffle(self.cards)
 
     def print_deck(self):
-    """
-    Prints all cards in deck - for debugging
-    """
+        """
+        Prints all cards in deck - for debugging
+        """
         for card in self.cards:
             print(card)
 
-    #select random cards, remove them from the deck and add to delt
-    #cards. Return them for use.
     def deal_cards(self, no_cards):
         """
         Select random cards from the deck, and return them to be added to hands,
@@ -77,7 +75,7 @@ class Game:
             round()
 
     def round(self):
-            pass
+        pass
 
     def turn(self, player):
         """#ask for the players input
@@ -99,7 +97,13 @@ class TexasHoldEm(Game):
             for card in cards:
                 player.add_card(card) #adds a card to the players hand
         self.community_cards = self.deck.deal_cards(3) #sets the 3 initial community cards
+        self.recent_actions = []
+        self.update_recent_actions(self.players)
     
+    def add_community_cards(self, cards):
+        for card in cards:
+            self.community_cards.append(card)
+
     def play(self):
         """
         Plays the game by going through rounds.
@@ -107,13 +111,18 @@ class TexasHoldEm(Game):
         """
         for i in range(0,self.rounds):
             print("Round " + str(i+1))
-            round_players = self.players.view() #Players in this round
+            round_players = self.players.copy() #Players in this round
             self.small_blind()
             self.big_blind()
+            print("Utg")
             self.under_the_gun(round_players)
+            print("Flop")
             self.flop(round_players)
+            print("Betting I")
             self.betting(round_players)
+            print("Betting II")
             self.betting(round_players)
+            print("Showdown")
             self.showdown(round_players)
 
     def small_blind(self):
@@ -145,12 +154,9 @@ class TexasHoldEm(Game):
         Should be everything before Flop
         TODO - Fix issues with end - should continue until all players call or fold
         """
-        if len(round_players) > 2:
-            for i in range(2,len(round_players())): #Only players that weren't SB and BB
-                self.turn(round_players,round_players[i],True)
-            self.call(self.dealer()) #Dealer just calls for now - no AI
-            self.previous_bet = 0 #Make it so that Player 1 can check for 1st round
-            self.call(self.dealer) #Dealer calls
+        if len(round_players) > 2: #only perform this if its needed
+            cur_player = 2
+            self.round(cur_player,round_players)
 
     def flop(self, round_players):
         """
@@ -158,47 +164,74 @@ class TexasHoldEm(Game):
         TODO - betting until all players have folded or called last raise
         """
         print("The community cards are: ")
-            for card in self.community_cards:
-                suit, rank = card.identify_card()
-                print(suit + rank)
-        pass
+        for card in self.community_cards:
+            suit, rank = card.identify_card()
+            print(suit + rank)
+        cur_player = 0
+        self.round(cur_player, round_players)
+
 
     def betting(self, round_players):
         """
         Deal additional community card, betting until all players have folded or called last raise
         TODO - betting until all players have folded or called last raise
         """
-        card = self.deck.deal_cards(1)
-        self.community_cards.append(card)
+        self.add_community_cards(self.deck.deal_cards(1)) 
         for card in self.community_cards:
                 suit, rank = card.identify_card()
                 print(suit + rank)
-        pass
+        cur_player = 0
+        self.round(cur_player, round_players)
 
+    def round(self, cur_player, round_players):
+        while not(self.evaluate_actions()): #Iterate until all players have folded or called
+            choice = self.turn(round_players,round_players[cur_player],True)
+            self.update_recent_actions(round_players)
+            if choice == "2":
+                cur_player = cur_player - 1
+            cur_player = cur_player + 1
+            if cur_player >= len(round_players):
+                self.call(self.dealer) #Dealer just calls for now - no AI
+                cur_player = 0
+        self.previous_bet = 0 #Make it so that Player 1 can check for Flop round
+        self.reset_recent_actions(round_players) #reset actions so that next round is played
+        
     def showdown(self,round_players):
         """
         Evaluate the best hand
         """
         pass
 
-    """#Todo - set restrictions on how to end round
-    def round(self, round_players):
-        #play a round until a player has won
-        while len(round_players) > 1: #not true condition, must be improved
-            print("The community cards are: ")
-            for card in self.community_cards:
-                suit, rank = card.identify_card()
-                print(suit + rank)
-            for player in round_players:
-                self.turn(round_players,player,False)
-                #take a turn
-                #check if a player has won
-                #end if won, continue if not
-            self.call(self.dealer)
-            card = self.deck.deal_cards(1)
-            self.community_cards.append(card)"""
+    def evaluate_actions(self):
+        """
+        Determine if any actions in the last round have been raises. If so, return false
+        If no actions have been a raise, all players have called or folded and round ends
+        '1' - raise
+        '2' - fold
+        '3' - call
+        """
+        for action in self.recent_actions:
+            if action == '1':
+                return False
+        return True
 
-    def turn(self, round_players, player, UTG):
+    def update_recent_actions(self,round_players):
+        """
+        Reset recent actions so that the next hand is played without interruption
+        """
+        self.recent_actions = []
+        for player in round_players:
+            self.recent_actions.append(player.return_prev_action())
+
+    def reset_recent_actions(self,round_players):
+        """
+        Reset recent actions so that the next hand is played without interruption
+        """
+        for player in round_players:
+            player.assign_recent_action("1")
+        self.update_recent_actions(round_players)
+
+    def turn(self, round_players, player: Player, UTG):
         """
         Prompt player for input, call the correct function to implement their choice
         """
@@ -209,19 +242,16 @@ class TexasHoldEm(Game):
             for card in cards:
                 suit, rank = card.identify_card()
                 print(suit+rank)
-        options = "Would you like to:\n1 - Bet\n2 - Fold\n3 - Call\n" #present options
-        if self.previous_bet > 0: #Only allow for check if the previous bet was zero
-            options = options + "4 - Check\n"
+        options = "Would you like to:\n1 - Raise\n2 - Fold\n3 - Call\n" #present options
         choice = input(options) #Complete player input
         if choice == "1":
-            self.bet(player)
+            self.Raise(player)
         elif choice == "2":
             self.fold(player, round_players)
         elif choice == "3":
             self.call(player)
-        elif choice == "4":
-            self.check(player)
-
+        player.assign_recent_action(choice)
+        return choice
     
     def fold(self, player, round_players):
         """
@@ -229,7 +259,6 @@ class TexasHoldEm(Game):
         """
         round_players.remove(player)
         
-
     def call(self, player: Player):
         """
         Match the previous bet if possible, or go all in otherwise
@@ -242,7 +271,7 @@ class TexasHoldEm(Game):
             player.bet(self.previous_bet) 
             self.add_to_pot(self.previous_bet)
 
-    def bet(self, player: Player):
+    def Raise(self, player: Player):
         """
         Ask player how much they will bet - must be greater than previous amount
         """
@@ -256,12 +285,5 @@ class TexasHoldEm(Game):
         self.previous_bet = amt
         self.add_to_pot(amt)
 
-    #I dont know what this does yet
-    def check(self, player):
-        pass
-
     def add_to_pot(self, amt):
         self.pot = self.pot + amt
-
-
-    #call raise or fold - calling when bet is zero is check

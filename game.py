@@ -1,9 +1,39 @@
 from player import Player, Dealer
 import random
-from Card import Card
+from card import Card
+from treys import Card as tCard
+from treys import Evaluator
 
-ALLRANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+ALLRANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K']
 ALLSUITS = ['D', 'H', 'S', 'C']
+
+def create_board(game):
+    """
+    Reformat the cards into this library's syntax
+    """
+    cards = game.get_community_cards()
+    board = []
+    for card in cards:
+        suit, rank = card.identify_card()
+        new_card = rank+suit.lower()
+        board.append(tCard.new(new_card))
+    return board
+
+def create_hand(player):
+    """
+    Reformat the cards into this library's syntax
+    """
+    cards = player.player_cards()
+    hand = []
+    for card in cards:
+        suit, rank = card.identify_card()
+        new_card = rank+suit.lower()
+        hand.append(tCard.new(new_card))
+    return hand
+
+def evaluate_player_hand(board, hand):
+    evaluator = Evaluator()
+    return evaluator.evaluate(board,hand)
 
 class Deck:
     def __init__(self):
@@ -96,6 +126,9 @@ class TexasHoldEm(Game):
             cards = self.deck.deal_cards(2) #2 cards for texas hold em
             for card in cards:
                 player.add_card(card) #adds a card to the players hand
+        cards = self.deck.deal_cards(2) #2 cards for texas hold em
+        for card in cards:
+            self.dealer.add_card(card) #adds a card to the players hand
         self.community_cards = self.deck.deal_cards(3) #sets the 3 initial community cards
         self.recent_actions = []
         self.update_recent_actions(self.players)
@@ -200,7 +233,20 @@ class TexasHoldEm(Game):
         """
         Evaluate the best hand
         """
-        pass
+        board = create_board(self)
+        high_scorer = 0
+        hand = create_hand(self.dealer)
+        max_score = evaluate_player_hand(board,hand)
+        for player in round_players:
+            hand = create_hand(player)
+            score = evaluate_player_hand(board,hand)
+            if score > max_score:
+                max_score = score
+                high_scorer = player.player_number()
+        print("Player " + str(high_scorer) + " has won!")
+
+
+
 
     def evaluate_actions(self):
         """
@@ -287,3 +333,6 @@ class TexasHoldEm(Game):
 
     def add_to_pot(self, amt):
         self.pot = self.pot + amt
+
+    def get_community_cards(self):
+        return self.community_cards

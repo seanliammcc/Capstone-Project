@@ -1,6 +1,6 @@
-import Camera
+import camera
 from game import Deck, Game, TexasHoldEm
-import Card
+import card
 import motor
 from player import Player, Dealer
 

@@ -1,5 +1,5 @@
-import Card
-from Camera import Image
+import card
+from camera import Image
 import numpy
 
 
@@ -50,6 +50,9 @@ class Player:
 
     def assign_recent_action(self, action):
         self.previous_action = action
+
+    def win(self, pot):
+        self.money = self.money + pot
 
 class Dealer(Player):
     def __init__(self,rigged=False, number=0,betting=5,starting_hand = None):

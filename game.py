@@ -277,6 +277,7 @@ class TexasHoldEm(Game):
         for player in round_players:
             player.assign_recent_action("1")
             player.reset_player_round_bet()
+        self.dealer.reset_player_round_bet()
         self.update_recent_actions(round_players)
 
     def turn(self, round_players, player: Player, UTG):
@@ -331,13 +332,18 @@ class TexasHoldEm(Game):
     def Raise(self, player: Player):
         """
         Ask player how much they will bet - must be greater than previous amount
+        TODO - raise previous bet, not just net bet
         """
         print("You have " + str(player.balance()))
-        amt = float(input("Input how much would you like to bet: "))
-        while not(player.bet(amt)) or amt < (self.round_bet - player.get_player_round_bet()): 
+        amt = float(input("Input how much would you like to raise the previous bet by: "))
+        call_amt = self.round_bet - player.get_player_round_bet()
+        amt =  call_amt + amt
+        while not(player.bet(amt)): 
         #will remove money in player.bet if amt is valid, otherwise prompts again
             print("Invalid amount.")
             amt = float(input("Input how much would you like to bet: "))
+            call_amt = self.round_bet - player.get_player_round_bet()
+            amt =  call_amt + amt
         self.round_bet = player.get_player_round_bet()
         self.add_to_pot(amt)
 

@@ -2,7 +2,6 @@ import card
 from camera import Image
 import numpy
 
-
 class Player:
     def __init__(self,number,betting=5, starting_hand = None):
         """

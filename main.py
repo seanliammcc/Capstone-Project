@@ -18,7 +18,8 @@ def create_players(no_players,START_AMOUNT):
 def main():
     START_AMOUNT = 5.00
     game_deck = Deck() #Create Deck
-    players = create_players(3,START_AMOUNT) #Create players for game
+    no_players = int(input("Please input the number of players:\n"))
+    players = create_players(no_players,START_AMOUNT) #Create players for game
     dealer = Dealer() #Create Dealer
     g = TexasHoldEm(players,dealer,0,game_deck) #Create Game
     g.play()

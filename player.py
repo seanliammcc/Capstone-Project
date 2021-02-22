@@ -13,6 +13,7 @@ class Player:
         self.money = betting
         self.number = number
         self.previous_action = "1"
+        self.round_bet = 0
     
     def add_card(self, Card):
         """
@@ -25,8 +26,9 @@ class Player:
         If possible, remove money from player and return true
         Otherwise, return false
         """
-        if self.money - amt > 0:
+        if self.money - amt >= 0:
             self.money = self.money - amt
+            self.set_player_round_bet(amt)
             return True
         return False
     
@@ -47,6 +49,15 @@ class Player:
 
     def return_prev_action(self):
         return self.previous_action
+
+    def set_player_round_bet(self, round_bet):
+        self.round_bet = round_bet + self.round_bet
+
+    def reset_player_round_bet(self):
+        self.round_bet = 0
+
+    def get_player_round_bet(self):
+        return self.round_bet
 
     def assign_recent_action(self, action):
         self.previous_action = action

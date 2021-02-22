@@ -79,7 +79,7 @@ class Deck:
         return cards
 
 class Game:
-    def __init__(self, players: Player, dealer: Dealer, pot, deck: Deck, SB = .25, rounds=3):
+    def __init__(self, players: Player, dealer: Dealer, pot, deck: Deck, SB = .25, rounds=1):
         """
         Creates a game with an array of player, the dealer, a pot, a deck, and a 
         specified number of rounds.
@@ -90,7 +90,7 @@ class Game:
         self.pot = pot
         self.rounds = rounds
         self.deck = deck
-        self.previous_bet = 0
+        self.round_bet = 0
         self.SB = SB
         #shuffle
         self.deck.shuffle()
@@ -147,7 +147,7 @@ class TexasHoldEm(Game):
             round_players = self.players.copy() #Players in this round
             self.small_blind()
             self.big_blind()
-            print("Utg")
+            print("Under the Gun")
             self.under_the_gun(round_players)
             print("Flop")
             self.flop(round_players)
@@ -180,6 +180,7 @@ class TexasHoldEm(Game):
         print("Player " + str(player.player_number()) + ", you have bet " + str(BB))
         player.bet(BB) #removes amount from player
         self.add_to_pot(BB) #adds amount to pot
+        self.round_bet = BB
 
     def under_the_gun(self,round_players):
         """
@@ -189,7 +190,8 @@ class TexasHoldEm(Game):
         """
         if len(round_players) > 2: #only perform this if its needed
             cur_player = 2
-            self.round(cur_player,round_players)
+            self.round(cur_player,round_players, True)
+        print()
 
     def flop(self, round_players):
         """
@@ -202,7 +204,7 @@ class TexasHoldEm(Game):
             print(suit + rank)
         cur_player = 0
         self.round(cur_player, round_players)
-
+        print()
 
     def betting(self, round_players):
         """
@@ -215,10 +217,12 @@ class TexasHoldEm(Game):
                 print(suit + rank)
         cur_player = 0
         self.round(cur_player, round_players)
+        print()
 
-    def round(self, cur_player, round_players):
+    def round(self, cur_player, round_players, UTG=False):
         while not(self.evaluate_actions()): #Iterate until all players have folded or called
-            choice = self.turn(round_players,round_players[cur_player],True)
+            choice = self.turn(round_players,round_players[cur_player],UTG)
+            print()
             self.update_recent_actions(round_players)
             if choice == "2":
                 cur_player = cur_player - 1
@@ -226,7 +230,7 @@ class TexasHoldEm(Game):
             if cur_player >= len(round_players):
                 self.call(self.dealer) #Dealer just calls for now - no AI
                 cur_player = 0
-        self.previous_bet = 0 #Make it so that Player 1 can check for Flop round
+        self.round_bet = 0 #Make it so that Player 1 can check for Flop round
         self.reset_recent_actions(round_players) #reset actions so that next round is played
         
     def showdown(self,round_players):
@@ -236,17 +240,14 @@ class TexasHoldEm(Game):
         board = create_board(self)
         high_scorer = 0
         hand = create_hand(self.dealer)
-        max_score = evaluate_player_hand(board,hand)
+        max_score = evaluate_player_hand(board,hand) #start with the dealer as the best hand
         for player in round_players:
-            hand = create_hand(player)
+            hand = create_hand(player) #Find the highest hand and use that as the high scorer
             score = evaluate_player_hand(board,hand)
             if score > max_score:
                 max_score = score
                 high_scorer = player.player_number()
         print("Player " + str(high_scorer) + " has won!")
-
-
-
 
     def evaluate_actions(self):
         """
@@ -275,12 +276,14 @@ class TexasHoldEm(Game):
         """
         for player in round_players:
             player.assign_recent_action("1")
+            player.reset_player_round_bet()
         self.update_recent_actions(round_players)
 
     def turn(self, round_players, player: Player, UTG):
         """
         Prompt player for input, call the correct function to implement their choice
         """
+        print("Player " + str(player.player_number()) + ", you have " +str(player.balance()) + ".")
         print("Player " + str(player.player_number()) + ", please type the number for your choice.")
         if not(UTG):  #Only show player their cards if its not the first round
             print("Your cards are:")
@@ -288,15 +291,23 @@ class TexasHoldEm(Game):
             for card in cards:
                 suit, rank = card.identify_card()
                 print(suit+rank)
-        options = "Would you like to:\n1 - Raise\n2 - Fold\n3 - Call\n" #present options
-        choice = input(options) #Complete player input
-        if choice == "1":
-            self.Raise(player)
-        elif choice == "2":
-            self.fold(player, round_players)
-        elif choice == "3":
-            self.call(player)
+        choice = ""
+        while choice != "1" and choice != "2" and choice != "3": 
+            options = "Would you like to:\n1 - Raise\n2 - Fold\n3 - Call\n" #present options
+            choice = input(options) #Complete player input
+            if choice == "1":
+                self.Raise(player)
+                print("You have " + str(player.balance()))
+            elif choice == "2":
+                self.fold(player, round_players)
+            elif choice == "3":
+                self.call(player)
+                print("You have " + str(player.balance()))
+            else:
+                print("Invalid option")
         player.assign_recent_action(choice)
+        print("This player has bet " + str(player.get_player_round_bet()))
+        self.display_pot()
         return choice
     
     def fold(self, player, round_players):
@@ -309,13 +320,14 @@ class TexasHoldEm(Game):
         """
         Match the previous bet if possible, or go all in otherwise
         """
-        if player.balance() - self.previous_bet < 0: #if player does not have enough money to call
+        call_amt = self.round_bet - player.get_player_round_bet()
+        if player.balance() - call_amt < 0: #if player does not have enough money to call
             print("You do not have enough money to call, so you go all in.")
             player.bet(player.balance())
             self.add_to_pot(player.balance())
         else: #Otherwise, just call
-            player.bet(self.previous_bet) 
-            self.add_to_pot(self.previous_bet)
+            player.bet(call_amt) 
+            self.add_to_pot(call_amt)
 
     def Raise(self, player: Player):
         """
@@ -323,16 +335,18 @@ class TexasHoldEm(Game):
         """
         print("You have " + str(player.balance()))
         amt = float(input("Input how much would you like to bet: "))
-        while not(player.bet(amt)) and amt < self.previous_bet: 
+        while not(player.bet(amt)) or amt < (self.round_bet - player.get_player_round_bet()): 
         #will remove money in player.bet if amt is valid, otherwise prompts again
             print("Invalid amount.")
             amt = float(input("Input how much would you like to bet: "))
-        print("You have " + str(player.balance()))
-        self.previous_bet = amt
+        self.round_bet = player.get_player_round_bet()
         self.add_to_pot(amt)
 
     def add_to_pot(self, amt):
         self.pot = self.pot + amt
+
+    def display_pot(self):
+        print("The pot has $" + str(self.pot))
 
     def get_community_cards(self):
         return self.community_cards

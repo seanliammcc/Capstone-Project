@@ -285,12 +285,11 @@ class TexasHoldEm(Game):
         """
         print("Player " + str(player.player_number()) + ", you have " +str(player.balance()) + ".")
         print("Player " + str(player.player_number()) + ", please type the number for your choice.")
-        if not(UTG):  #Only show player their cards if its not the first round
-            print("Your cards are:")
-            cards = player.player_cards()
-            for card in cards:
-                suit, rank = card.identify_card()
-                print(suit+rank)
+        print("Your cards are:")
+        cards = player.player_cards()
+        for card in cards:
+            suit, rank = card.identify_card()
+            print(suit+rank)
         choice = ""
         while choice != "1" and choice != "2" and choice != "3": 
             options = "Would you like to:\n1 - Raise\n2 - Fold\n3 - Call\n" #present options

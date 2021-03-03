@@ -76,4 +76,10 @@ class Dealer(Player):
         Player.bet(self, amt)
         print("The dealer has called")
 
+    #Bluff?
+
+    #Evaluate hand on every iteration
+
+    
+
 

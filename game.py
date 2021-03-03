@@ -247,16 +247,16 @@ class TexasHoldEm(Game):
         for card in self.dealer.player_cards():
             suit, rank = card.identify_card()
             print(suit + rank)
-        max_score = evaluate_player_hand(board,hand) #start with the dealer as the best hand
+        min_score = evaluate_player_hand(board,hand) #start with the dealer as the best hand
         for player in round_players:
             hand = create_hand(player) #Find the highest hand and use that as the high scorer
             score = evaluate_player_hand(board,hand)
-            if score > max_score:
-                max_score = score
+            if score < min_score:
+                min_score = score
                 high_scorer = player.player_number()
         print("Player " + str(high_scorer) + " has won!")
         evaluator = Evaluator()
-        winning_class = evaluator.get_rank_class(max_score)
+        winning_class = evaluator.get_rank_class(min_score)
         print("The winning hand was " + evaluator.class_to_string(winning_class) + '.')
 
     def evaluate_actions(self, cur_player):
@@ -371,3 +371,4 @@ class TexasHoldEm(Game):
 
     def dollar_print(self, num):
         return "$" + round(num,2)
+

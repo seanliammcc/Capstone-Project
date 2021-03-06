@@ -132,7 +132,7 @@ class TexasHoldEm(Game):
         self.community_cards = self.deck.deal_cards(3) #sets the 3 initial community cards
         self.recent_actions = []
         self.update_recent_actions(self.players)
-        self.last_raise_player = -1
+        self.last_raise_player = 2
     
     def add_community_cards(self, cards):
         for card in cards:
@@ -224,7 +224,7 @@ class TexasHoldEm(Game):
         print()
 
     def round(self, cur_player, round_players, UTG=False):
-        while not(self.evaluate_actions(cur_player)): #Iterate until all players have folded or called
+        while not(self.evaluate_actions(round_players, cur_player)): #Iterate until all players have folded or called
             choice = self.turn(round_players,round_players[cur_player],UTG)
             print()
             self.update_recent_actions(round_players)
@@ -259,7 +259,7 @@ class TexasHoldEm(Game):
         winning_class = evaluator.get_rank_class(min_score)
         print("The winning hand was " + evaluator.class_to_string(winning_class) + '.')
 
-    def evaluate_actions(self, cur_player):
+    def evaluate_actions(self, round_players, cur_player):
         """
         Determine if any actions in the last round have been raises. If so, return false
         If no actions have been a raise, all players have called or folded and round ends
@@ -267,8 +267,9 @@ class TexasHoldEm(Game):
         '2' - fold
         '3' - call
         """
+
         for action in self.recent_actions:
-            if action == '1' and self.last_raise_player != (cur_player + 1):
+            if action == '1' and self.last_raise_player != (round_players[cur_player].player_number()):
                 return False
         return True
 

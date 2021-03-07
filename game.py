@@ -55,6 +55,8 @@ class Deck:
         Currently randomizes the cards that are in the deck.
         TODO - make shuffling physical with dealer
         """
+        self.cards.extend(self.delt_cards)
+        self.delt_cards = []
         random.shuffle(self.cards)
 
     def print_deck(self):
@@ -79,7 +81,7 @@ class Deck:
         return cards
 
 class Game:
-    def __init__(self, players: Player, dealer: Dealer, pot, deck: Deck, SB = .25, rounds=1):
+    def __init__(self, players: Player, dealer: Dealer, pot, deck: Deck, SB = .25, rounds=2):
         """
         Creates a game with an array of player, the dealer, a pot, a deck, and a 
         specified number of rounds.
@@ -122,17 +124,7 @@ class TexasHoldEm(Game):
         if community_cards == None:
             self.community_cards = [] #cards in middle of table
         #deals cards to all the players in the game
-        for player in self.players:
-            cards = self.deck.deal_cards(2) #2 cards for texas hold em
-            for card in cards:
-                player.add_card(card) #adds a card to the players hand
-        cards = self.deck.deal_cards(2) #2 cards for texas hold em
-        for card in cards:
-            self.dealer.add_card(card) #adds a card to the players hand
-        self.community_cards = self.deck.deal_cards(3) #sets the 3 initial community cards
-        self.recent_actions = []
-        self.update_recent_actions(self.players)
-        self.last_raise_player = 2
+        self.reset_round(0)
     
     def add_community_cards(self, cards):
         for card in cards:
@@ -158,6 +150,7 @@ class TexasHoldEm(Game):
             self.betting(round_players)
             print("Showdown")
             self.showdown(round_players)
+            self.reset_round(i+1)#reorder the players array so player 1 is in back
 
     def small_blind(self):
         """
@@ -182,6 +175,7 @@ class TexasHoldEm(Game):
         player.bet(BB) #removes amount from player
         self.add_to_pot(BB) #adds amount to pot
         self.round_bet = BB
+        self.last_raise_player = player.player_number()
 
     def under_the_gun(self,round_players):
         """
@@ -242,7 +236,7 @@ class TexasHoldEm(Game):
         Evaluate the best hand
         """
         board = create_board(self)
-        high_scorer = 0
+        high_scorer = self.dealer
         hand = create_hand(self.dealer)
         for card in self.dealer.player_cards():
             suit, rank = card.identify_card()
@@ -253,11 +247,13 @@ class TexasHoldEm(Game):
             score = evaluate_player_hand(board,hand)
             if score < min_score:
                 min_score = score
-                high_scorer = player.player_number()
-        print("Player " + str(high_scorer) + " has won!")
+                high_scorer = player
+        print("Player " + str(high_scorer.player_number()) + " has won!")
+        high_scorer.win(self.pot)
         evaluator = Evaluator()
         winning_class = evaluator.get_rank_class(min_score)
         print("The winning hand was " + evaluator.class_to_string(winning_class) + '.')
+
 
     def evaluate_actions(self, round_players, cur_player):
         """
@@ -373,3 +369,23 @@ class TexasHoldEm(Game):
     def dollar_print(self, num):
         return "$" + round(num,2)
 
+    def update_positions(self):
+        prev_sb = self.players.pop(0)
+        self.players.insert(len(self.players), prev_sb)
+
+    def reset_round(self, round_no):
+        if round_no > 0:
+            self.update_positions()
+        for player in self.players:
+            player.fold()
+            cards = self.deck.deal_cards(2) #2 cards for texas hold em
+            for card in cards:
+                player.add_card(card) #adds a card to the players hand
+        cards = self.deck.deal_cards(2) #2 cards for texas hold em
+        self.dealer.fold()
+        for card in cards:
+            self.dealer.add_card(card) #adds a card to the players hand
+        self.community_cards = self.deck.deal_cards(3) #sets the 3 initial community cards
+        self.recent_actions = []
+        self.update_recent_actions(self.players)
+        self.pot = 0

@@ -32,6 +32,15 @@ else: #Linux and Mac
 #     all_dist[i] = dist
 
 # avg = np.average(all_dist)
+m1 = 307.46/1000 #kg
+d1 = 6.35/1000 #m
+d2 = 10.7144/1000
+J1 = m1*(np.pi*d2/(2*np.pi))**2
+m2 =15.27/1000 #kg
+J2 = 1/8*m2*d1**2.00
+d2 = 10.7144/1000
+J3 = 1/8*m2*(d2**2.0+d1**2.0)
+print(J1+J2+J3)
 
 # print("The average distance is: " + str(round(avg,2)) + "mm")
 # print("In inches, this is: " + str(round(avg*0.0393701,2)) + "in")

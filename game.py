@@ -264,7 +264,6 @@ class TexasHoldEm(Game):
         '2' - fold
         '3' - call
         """
-        print(self.recent_actions)
         for action in self.recent_actions:
             if action == '1' and self.last_raise_player != (round_players[cur_player].player_number()):
                 return False

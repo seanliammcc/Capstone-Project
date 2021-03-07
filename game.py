@@ -81,7 +81,7 @@ class Deck:
         return cards
 
 class Game:
-    def __init__(self, players: Player, dealer: Dealer, pot, deck: Deck, SB = .25, rounds=2):
+    def __init__(self, players: Player, dealer: Dealer, pot, deck: Deck, SB = .25, rounds=5):
         """
         Creates a game with an array of player, the dealer, a pot, a deck, and a 
         specified number of rounds.
@@ -89,6 +89,7 @@ class Game:
         """
         self.players = players
         self.dealer = dealer
+        self.players.append(self.dealer)
         self.pot = pot
         self.rounds = rounds
         self.deck = deck
@@ -226,7 +227,7 @@ class TexasHoldEm(Game):
                 cur_player = cur_player - 1
             cur_player = cur_player + 1
             if cur_player >= len(round_players):
-                self.call(self.dealer) #Dealer just calls for now - no AI
+                #Dealer just calls for now - no AI
                 cur_player = 0
         self.round_bet = 0 #Make it so that Player 1 can check for Flop round
         self.reset_recent_actions(round_players) #reset actions so that next round is played
@@ -263,7 +264,7 @@ class TexasHoldEm(Game):
         '2' - fold
         '3' - call
         """
-
+        print(self.recent_actions)
         for action in self.recent_actions:
             if action == '1' and self.last_raise_player != (round_players[cur_player].player_number()):
                 return False
@@ -284,7 +285,6 @@ class TexasHoldEm(Game):
         for player in round_players:
             player.assign_recent_action("1")
             player.reset_player_round_bet()
-        self.dealer.reset_player_round_bet()
         self.update_recent_actions(round_players)
         self.last_raise_player = -1
 
@@ -292,6 +292,10 @@ class TexasHoldEm(Game):
         """
         Prompt player for input, call the correct function to implement their choice
         """
+        if player == self.dealer:
+            self.call(player)
+            player.assign_recent_action("3")
+            return "3"
         print("Player " + str(player.player_number()) + ", you have $" + str(round(player.balance(),2)) + ".")
         print("Player " + str(player.player_number()) + ", please type the number for your choice.")
         print("Your cards are:")
@@ -376,15 +380,12 @@ class TexasHoldEm(Game):
     def reset_round(self, round_no):
         if round_no > 0:
             self.update_positions()
+        self.deck.shuffle()
         for player in self.players:
             player.fold()
             cards = self.deck.deal_cards(2) #2 cards for texas hold em
             for card in cards:
                 player.add_card(card) #adds a card to the players hand
-        cards = self.deck.deal_cards(2) #2 cards for texas hold em
-        self.dealer.fold()
-        for card in cards:
-            self.dealer.add_card(card) #adds a card to the players hand
         self.community_cards = self.deck.deal_cards(3) #sets the 3 initial community cards
         self.recent_actions = []
         self.update_recent_actions(self.players)

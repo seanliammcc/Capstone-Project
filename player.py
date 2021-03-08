@@ -80,6 +80,4 @@ class Dealer(Player):
 
     #Evaluate hand on every iteration
 
-    
-
 

@@ -177,12 +177,12 @@ class TexasHoldEm(Game):
         self.add_to_pot(BB) #adds amount to pot
         self.round_bet = BB
         self.last_raise_player = player.player_number()
+        self.BB_player = player.player_number()
 
     def under_the_gun(self,round_players):
         """
         Complete the round before the flop, each player between BB and dealer goes
         Should be everything before Flop
-        TODO - Fix issues with end - should continue until all players call or fold
         """
         if len(round_players) > 2: #only perform this if its needed
             cur_player = 2
@@ -195,7 +195,6 @@ class TexasHoldEm(Game):
     def flop(self, round_players):
         """
         Reveals community cards, betting until all players have folded or called last raise
-        TODO - betting until all players have folded or called last raise
         """
         print("The community cards are: ")
         for card in self.community_cards:
@@ -208,7 +207,6 @@ class TexasHoldEm(Game):
     def betting(self, round_players):
         """
         Deal additional community card, betting until all players have folded or called last raise
-        TODO - betting until all players have folded or called last raise
         """
         self.add_community_cards(self.deck.deal_cards(1)) 
         for card in self.community_cards:
@@ -264,8 +262,12 @@ class TexasHoldEm(Game):
         '2' - fold
         '3' - call
         """
+        player_no = round_players[cur_player].player_number()
+        if (player_no == self.BB_player and self.BB == False):
+            self.BB = True
+            return False
         for action in self.recent_actions:
-            if action == '1' and self.last_raise_player != (round_players[cur_player].player_number()):
+            if action == '1' and self.last_raise_player != (player_no):
                 return False
         return True
 
@@ -317,7 +319,7 @@ class TexasHoldEm(Game):
             else:
                 print("Invalid option")
         player.assign_recent_action(choice)
-        print("This player has bet $" + str(round(player.get_player_round_bet(),2)))
+        #print("This player has bet $" + str(round(player.get_player_round_bet(),2)))
         self.display_pot()
         return choice
     
@@ -389,3 +391,5 @@ class TexasHoldEm(Game):
         self.recent_actions = []
         self.update_recent_actions(self.players)
         self.pot = 0
+        self.BB = False
+        self.BB_player = -1
